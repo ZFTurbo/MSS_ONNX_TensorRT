@@ -86,11 +86,20 @@ def get_model_from_config(model_type: str, config_path: str) -> Tuple:
     if model_type == 'mdx23c':
         from models.mdx23c_tfc_tdf_v3 import TFC_TDF_net
         model = TFC_TDF_net(config)
+    elif model_type == 'my_mdx23c':
+        from models_without_stft.mdx23c_tfc_tdf_v3_no_stft import TFC_TDF_net
+        model = TFC_TDF_net(config)
     elif model_type == 'htdemucs':
         from models.demucs4ht import get_model
         model = get_model(config)
+    elif model_type == 'my_htdemucs':
+        from models_without_stft.demucs4ht_no_stft import get_model
+        model = get_model(config)
     elif model_type == 'segm_models':
         from models.segm_models import Segm_Models_Net
+        model = Segm_Models_Net(config)
+    elif model_type == 'my_segm_models':
+        from models_without_stft.segm_models_no_stft import Segm_Models_Net
         model = Segm_Models_Net(config)
     elif model_type == 'torchseg':
         from models.torchseg_models import Torchseg_Net
@@ -98,11 +107,17 @@ def get_model_from_config(model_type: str, config_path: str) -> Tuple:
     elif model_type == 'mel_band_roformer':
         from models.bs_roformer import MelBandRoformer
         model = MelBandRoformer(**dict(config.model))
+    elif model_type == 'my_mel_band_roformer':
+        from models_without_stft.mel_band_roformer_no_stft import MelBandRoformer
+        model = MelBandRoformer(**dict(config.model))
     elif model_type == 'mel_band_roformer_experimental':
         from models.bs_roformer.mel_band_roformer_experimental import MelBandRoformer
         model = MelBandRoformer(**dict(config.model))
     elif model_type == 'bs_roformer':
         from models.bs_roformer import BSRoformer
+        model = BSRoformer(**dict(config.model))
+    elif model_type == 'my_bs_roformer':
+        from models_without_stft.bs_roformer_no_stft import BSRoformer
         model = BSRoformer(**dict(config.model))
     elif model_type == 'bs_roformer_experimental':
         from models.bs_roformer.bs_roformer_experimental import BSRoformer
@@ -134,9 +149,9 @@ def get_model_from_config(model_type: str, config_path: str) -> Tuple:
     elif model_type == 'experimental_mdx23c_stht':
         from models.mdx23c_tfc_tdf_v3_with_STHT import TFC_TDF_net
         model = TFC_TDF_net(config)
-    elif model_type == 'myscnet':
-        from models.scnet.my_scnet import SCNet_encoder, SCNet_decoder
-        model = [SCNet_encoder(config), SCNet_decoder(config)]
+    # elif model_type == 'myscnet':
+    #     from models.scnet.my_scnet import SCNet_encoder, SCNet_decoder не очень полезно импортировать в ONNX
+    #     model = [SCNet_encoder(config), SCNet_decoder(config)]
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -423,8 +438,6 @@ def demix(
                                 model.get_inputs()[0].name: x.cpu().numpy(),
                                 model.get_inputs()[1].name: arr.cpu().numpy()
                             }
-                            
-                            
                             output = model.run(None, inputs)
                             x = preprocessor.istft(torch.tensor(output[0]).to(device), torch.tensor(output[1]).to(device))
                         else:
