@@ -1,6 +1,12 @@
 torch>=2.0.1
 torchaudio
+tensorrt-cu11==10.7.0
+tensorrt-lean-cu11==10.7.0
+tensorrt-dispatch-cu11==10.7.0
+tensorrt_lean==10.7.0
+tensorrt_dispatch==10.7.0
 numpy
+onnxruntime-gpu
 pandas
 scipy
 soundfile
