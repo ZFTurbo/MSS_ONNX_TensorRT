@@ -162,3 +162,99 @@ Look here: [GUI documentation](docs/gui.md) or see tutorial on [Youtube](https:/
       primaryClass={cs.SD}
 }
 ```
+
+# Модуль export_to_onnx
+
+Модуль для экспорта моделей разделения источников звука из PyTorch в формат ONNX.
+
+## Описание
+
+Модуль `export_to_onnx` предоставляет функциональность для конвертации моделей разделения источников звука из формата PyTorch в ONNX. Поддерживает различные типы моделей, включая:
+- HTDemucs
+- BS Roformer
+- Mel Band Roformer
+- mdx23c
+- segm
+
+## Использование
+
+### Как импортируемый модуль
+
+```python
+from export_to_onnx import export_model_to_onnx
+
+export_model_to_onnx(
+    config=your_config,
+    model=your_model,
+    model_type='htdemucs',
+    output_path='path/to/output/model.onnx'
+)
+```
+
+### Как отдельный скрипт
+
+```bash
+python export_to_onnx.py \
+    --model_type htdemucs \
+    --config_path path/to/config.yaml \
+    --checkpoint_path path/to/checkpoint.pth \
+    --output_path path/to/output/model.onnx \
+    --opset_version 17 \
+    --force_cpu
+```
+
+### Параметры командной строки
+
+- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
+- `--config_path`: Путь к файлу конфигурации модели
+- `--checkpoint_path`: Путь к чекпоинту модели
+- `--output_path`: Путь для сохранения ONNX модели
+- `--opset_version`: Версия ONNX opset (по умолчанию 17)
+- `--force_cpu`: Принудительное использование CPU даже при наличии CUDA
+
+## Особенности
+
+1. **Поддержка различных типов моделей**:
+   - Автоматическое определение препроцессора в зависимости от типа модели
+   - Специальная обработка для HTDemucs (двойной вход: STFT и raw audio)
+   - Поддержка других моделей с STFT препроцессингом
+
+2. **Динамические размеры**:
+   - Поддержка динамического размера батча
+
+3. **Валидация**:
+   - Проверка корректности экспортированной модели
+   - Сравнение выходов PyTorch и ONNX моделей
+   - Проверка совместимости размерностей
+
+4. **Оптимизация**:
+   - Использование постоянного сворачивания (constant folding)
+   - Поддержка различных версий ONNX opset
+
+## Примеры использования
+
+### Экспорт HTDemucs модели
+
+```bash
+python export_to_onnx.py \
+    --model_type htdemucs \
+    --config_path configs/htdemucs.yaml \
+    --checkpoint_path checkpoints/htdemucs.pth \
+    --output_path models/htdemucs.onnx
+```
+
+### Экспорт BS Roformer модели
+
+```bash
+python export_to_onnx.py \
+    --model_type bs_roformer \
+    --config_path configs/bs_roformer.yaml \
+    --checkpoint_path checkpoints/bs_roformer.pth \
+    --output_path models/bs_roformer.onnx
+```
+
+## Ограничения
+
+1. Модель должна быть в режиме eval() перед экспортом
+2. Все операции в модели должны быть поддерживаемы ONNX
+3. Для некоторых сложных моделей может потребоваться ручная настройка динамических осей

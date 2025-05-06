@@ -17,7 +17,6 @@ import loralib as lora
 import onnxruntime as ort
 import tensorrt as trt
 import pycuda.driver as cuda
-import pycuda.autoinit
 # from tensorrt_engine import Engine
 
 def load_config(model_type: str, config_path: str) -> Union[ConfigDict, OmegaConf]:
@@ -45,7 +44,7 @@ def load_config(model_type: str, config_path: str) -> Union[ConfigDict, OmegaCon
     """
     try:
         with open(config_path, 'r') as f:
-            if model_type == 'htdemucs':
+            if model_type == 'htdemucs' or model_type == 'my_htdemucs':
                 config = OmegaConf.load(config_path)
             else:
                 config = ConfigDict(yaml.load(f, Loader=yaml.FullLoader))
@@ -364,7 +363,7 @@ def demix(
     preprocessor = None
     mode = 'generic'
     if use_tensorrt:
-        pass
+        import pycuda.autoinit
 
     if use_onnx or use_tensorrt:
         if model_type == 'htdemucs':
