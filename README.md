@@ -178,7 +178,7 @@ Look here: [GUI documentation](docs/gui.md) or see tutorial on [Youtube](https:/
 
 ## Использование
 
-### Как импортируемый модуль
+### Экспорт в ONNX
 
 ```python
 from export_to_onnx import export_model_to_onnx
@@ -212,49 +212,35 @@ python export_to_onnx.py \
 - `--opset_version`: Версия ONNX opset (по умолчанию 17)
 - `--force_cpu`: Принудительное использование CPU даже при наличии CUDA
 
-## Особенности
+### Экспорт в TensorRT
 
-1. **Поддержка различных типов моделей**:
-   - Автоматическое определение препроцессора в зависимости от типа модели
-   - Специальная обработка для HTDemucs (двойной вход: STFT и raw audio)
-   - Поддержка других моделей с STFT препроцессингом
+```python
+from export_to_tensorrt import export_to_tensorrt
 
-2. **Динамические размеры**:
-   - Поддержка динамического размера батча
+export_to_tensorrt(
+    onnx_path='path/to/model.onnx',
+    model_type='htdemucs',
+    config=your_config,
+    output_path='path/to/output/model.engine',
+    fp16=True
+)
+```
 
-3. **Валидация**:
-   - Проверка корректности экспортированной модели
-   - Сравнение выходов PyTorch и ONNX моделей
-   - Проверка совместимости размерностей
-
-4. **Оптимизация**:
-   - Использование постоянного сворачивания (constant folding)
-   - Поддержка различных версий ONNX opset
-
-## Примеры использования
-
-### Экспорт HTDemucs модели
+### Как отдельный скрипт
 
 ```bash
-python export_to_onnx.py \
+python export_to_tensorrt.py \
+    --onnx_path path/to/model.onnx \
     --model_type htdemucs \
-    --config_path configs/htdemucs.yaml \
-    --checkpoint_path checkpoints/htdemucs.pth \
-    --output_path models/htdemucs.onnx
+    --config_path path/to/config.yaml \
+    --output_path path/to/output/model.engine \
+    --fp16
 ```
 
-### Экспорт BS Roformer модели
+### Параметры командной строки
 
-```bash
-python export_to_onnx.py \
-    --model_type bs_roformer \
-    --config_path configs/bs_roformer.yaml \
-    --checkpoint_path checkpoints/bs_roformer.pth \
-    --output_path models/bs_roformer.onnx
-```
-
-## Ограничения
-
-1. Модель должна быть в режиме eval() перед экспортом
-2. Все операции в модели должны быть поддерживаемы ONNX
-3. Для некоторых сложных моделей может потребоваться ручная настройка динамических осей
+- `--onnx_path`: Путь к ONNX модели
+- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
+- `--config_path`: Путь к файлу конфигурации модели
+- `--output_path`: Путь для сохранения TensorRT engine
+- `--fp16`: Использовать FP16 точность (опционально)

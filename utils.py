@@ -446,12 +446,12 @@ def demix(
                     elif use_tensorrt:
                         x = preprocessor.stft(arr).cpu().numpy()
                         context = model.create_execution_context()
-                        input_shape = x.shape
+                        input_tensor_name = model.get_tensor_name(0)
+                        context.set_input_shape(input_tensor_name, x.shape)
                         output_tensor_name = model.get_tensor_name(1)
-                        output_tensor_shape = model.get_tensor_shape(output_tensor_name)
-
+                        output_tensor_shape = context.get_tensor_shape(output_tensor_name)
+                        
                         output_size = trt.volume(output_tensor_shape) * np.dtype(np.float32).itemsize
-
                         d_input = cuda.mem_alloc(x.nbytes)
                         d_output = cuda.mem_alloc(output_size)
 
@@ -463,9 +463,8 @@ def demix(
 
                         output_data = np.empty(output_tensor_shape, dtype=np.float32)
                         cuda.memcpy_dtoh(output_data, d_output)
-
-
-                        x = preprocessor.istft(torch.tensor(x).to(device))
+                        
+                        x = preprocessor.istft(torch.tensor(output_data).to(device))
                     else:
                         x = model(arr)
 
