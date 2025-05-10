@@ -444,27 +444,60 @@ def demix(
                             x = torch.tensor(model.run(None, {model.get_inputs()[0].name: x.cpu().numpy()})[0])
                             x = preprocessor.istft(x.to(device))
                     elif use_tensorrt:
-                        x = preprocessor.stft(arr).cpu().numpy()
-                        context = model.create_execution_context()
-                        input_tensor_name = model.get_tensor_name(0)
-                        context.set_input_shape(input_tensor_name, x.shape)
-                        output_tensor_name = model.get_tensor_name(1)
-                        output_tensor_shape = context.get_tensor_shape(output_tensor_name)
-                        
-                        output_size = trt.volume(output_tensor_shape) * np.dtype(np.float32).itemsize
-                        d_input = cuda.mem_alloc(x.nbytes)
-                        d_output = cuda.mem_alloc(output_size)
-
-                        bindings = [int(d_input), int(d_output)]
-
-                        cuda.memcpy_htod(d_input, x)
-
-                        context.execute_v2(bindings)
-
-                        output_data = np.empty(output_tensor_shape, dtype=np.float32)
-                        cuda.memcpy_dtoh(output_data, d_output)
-                        
-                        x = preprocessor.istft(torch.tensor(output_data).to(device))
+                        if model_type == 'htdemucs':
+                            bindings = list()
+                            x = preprocessor.stft(arr).cpu().numpy()
+                            arr = arr.cpu().numpy()
+                            context = model.create_execution_context()
+                            
+                            input_tensor_name = model.get_tensor_name(0)
+                            context.set_input_shape(input_tensor_name, x.shape)
+                            d_input1 = cuda.mem_alloc(x.nbytes)
+                            cuda.memcpy_htod(d_input1, x)
+                            
+                            input_tensor_name = model.get_tensor_name(1)
+                            context.set_input_shape(input_tensor_name, arr.shape)
+                            d_input2 = cuda.mem_alloc(arr.nbytes)
+                            cuda.memcpy_htod(d_input2, arr)
+                            
+                            output_tensor_name = model.get_tensor_name(2)
+                            output_tensor_shape = context.get_tensor_shape(output_tensor_name)
+                            output_size = trt.volume(output_tensor_shape) * np.dtype(np.float32).itemsize
+                            d_output1 = cuda.mem_alloc(output_size)
+                            output_data1 = np.empty(output_tensor_shape, dtype=np.float32)
+                            
+                            output_tensor_name = model.get_tensor_name(3)
+                            output_tensor_shape = context.get_tensor_shape(output_tensor_name)
+                            output_size = trt.volume(output_tensor_shape) * np.dtype(np.float32).itemsize
+                            d_output2 = cuda.mem_alloc(output_size)
+                            output_data2 = np.empty(output_tensor_shape, dtype=np.float32)
+                            bindings = [int(d_input1), int(d_input2), int(d_output1), int(d_output2)]
+                            
+                            context.execute_v2(bindings)
+                            
+                            cuda.memcpy_dtoh(output_data1, d_output1)
+                            cuda.memcpy_dtoh(output_data2, d_output2)
+                            
+                            x = preprocessor.istft(torch.tensor(output_data1).to(device), torch.tensor(output_data2).to(device))
+                            
+                            
+                        else:
+                            x = preprocessor.stft(arr).cpu().numpy()
+                            context = model.create_execution_context()
+                            input_tensor_name = model.get_tensor_name(0)
+                            context.set_input_shape(input_tensor_name, x.shape)
+                            output_tensor_name = model.get_tensor_name(1)
+                            output_tensor_shape = context.get_tensor_shape(output_tensor_name)
+                            output_size = trt.volume(output_tensor_shape) * np.dtype(np.float32).itemsize
+                            d_input = cuda.mem_alloc(x.nbytes)
+                            d_output = cuda.mem_alloc(output_size)
+                            bindings = [int(d_input), int(d_output)]
+                            cuda.memcpy_htod(d_input, x)
+                            context.execute_v2(bindings)
+                            output_data = np.empty(output_tensor_shape, dtype=np.float32)
+                            
+                            cuda.memcpy_dtoh(output_data, d_output)
+                            x = preprocessor.istft(torch.tensor(output_data).to(device))
                     else:
                         x = model(arr)
 
