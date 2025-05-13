@@ -61,10 +61,9 @@ def run_folder(model, args, config, device, verbose: bool = False):
         detailed_pbar = False
     else:
         detailed_pbar = True
+    start_time = time.time()
 
     for path in mixture_paths:
-        if int(path.split('_')[1]) > 5:
-            continue
         print(f"Processing track: {path}")
         try:
             mix, sr = librosa.load(path, sr=sample_rate, mono=False)
@@ -72,6 +71,7 @@ def run_folder(model, args, config, device, verbose: bool = False):
             print(f'Cannot read track: {format(path)}')
             print(f'Error message: {str(e)}')
             continue
+        
 
         if len(mix.shape) == 1:
             mix = np.expand_dims(mix, axis=0)
@@ -85,7 +85,7 @@ def run_folder(model, args, config, device, verbose: bool = False):
             if config.inference['normalize'] is True:
                 mix, norm_params = normalize_audio(mix)
 
-        waveforms_orig = demix(config, model, mix, device, model_type=args.model_type, pbar=detailed_pbar, use_onnx=args.use_onnx, use_tensorrt=args.use_tensorrt)
+        waveforms_orig = demix(config, model, mix, device, model_type=args.model_type, pbar=detailed_pbar, use_onnx=args.use_onnx, use_tensorrt=args.use_tensorrt, use_compile=args.use_compile)
 
         if args.use_tta and not args.use_onnx:
             waveforms_orig = apply_tta(config, model, mix, waveforms_orig, device, args.model_type)
@@ -156,7 +156,7 @@ def parse_args(dict_args: Union[Dict, None]) -> argparse.Namespace:
     parser.add_argument("--onnx_model_path", type=str, default='', help="Path to ONNX model file")
     parser.add_argument("--use_tensorrt", action='store_true', help="Use TensorRT model for inference")
     parser.add_argument("--tensorrt_model_path", type=str, default="", help="Path to TensorRT model for inference")
-
+    parser.add_argument("--use_compile", action='store_true', help="Use torch.compile for models")
     if dict_args is not None:
         args = parser.parse_args([])
         args_dict = vars(args)
@@ -183,10 +183,11 @@ def proc_folder(dict_args):
 
     model_load_start_time = time.time()
     torch.backends.cudnn.benchmark = True
-
-    model, config = get_model_from_config(args.model_type, args.config_path)
+    if args.use_compile:
+        model, config = get_model_from_config(f"my_{args.model_type}", args.config_path)
+    else:
+        model, config = get_model_from_config(args.model_type, args.config_path)
     
-
     if args.start_check_point != '':
         load_start_checkpoint(args, model, type_='inference')
 
@@ -210,6 +211,9 @@ def proc_folder(dict_args):
         run_folder(session, args, config, device, verbose=True)
     elif args.use_tensorrt:
         run_folder(engine, args, config, device, verbose=True)
+    elif args.use_compile:
+        model = torch.compile(model)
+        run_folder(model, args, config, device, verbose=True)
     else:
         run_folder(model, args, config, device, verbose=True)
 
