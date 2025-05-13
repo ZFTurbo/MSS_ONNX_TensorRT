@@ -331,7 +331,8 @@ def demix(
     model_type: str,
     pbar: bool = False,
     use_onnx: bool = False, 
-    use_tensorrt: bool = False
+    use_tensorrt: bool = False,
+    use_compile: bool = False
 ) -> Dict[str, np.ndarray]:
     """
     Unified function for audio source separation with support for both PyTorch and ONNX models.
@@ -365,7 +366,7 @@ def demix(
     if use_tensorrt:
         import pycuda.autoinit
 
-    if use_onnx or use_tensorrt:
+    if use_onnx or use_tensorrt or use_compile:
         if model_type == 'htdemucs':
             mode = 'demucs'
             preprocessor = HTDemucs_processor(config)
@@ -432,17 +433,18 @@ def demix(
                     arr = torch.stack(batch_data, dim=0)
                     if use_onnx:
                         if model_type == 'htdemucs':
-                            x = preprocessor.stft(arr)
+                            x = preprocessor.stft(arr).cpu().numpy()
+                            arr = arr.cpu().numpy()
                             inputs = {
-                                model.get_inputs()[0].name: x.cpu().numpy(),
-                                model.get_inputs()[1].name: arr.cpu().numpy()
+                                model.get_inputs()[0].name: x,
+                                model.get_inputs()[1].name: arr
                             }
                             output = model.run(None, inputs)
                             x = preprocessor.istft(torch.tensor(output[0]).to(device), torch.tensor(output[1]).to(device))
                         else:
                             x = preprocessor.stft(arr)
-                            x = torch.tensor(model.run(None, {model.get_inputs()[0].name: x.cpu().numpy()})[0])
-                            x = preprocessor.istft(x.to(device))
+                            x = torch.tensor(model.run(None, {model.get_inputs()[0].name: x.cpu().numpy()})[0]).to(device)
+                            x = preprocessor.istft(x)
                     elif use_tensorrt:
                         if model_type == 'htdemucs':
                             bindings = list()
@@ -495,9 +497,17 @@ def demix(
                             cuda.memcpy_htod(d_input, x)
                             context.execute_v2(bindings)
                             output_data = np.empty(output_tensor_shape, dtype=np.float32)
-                            
                             cuda.memcpy_dtoh(output_data, d_output)
                             x = preprocessor.istft(torch.tensor(output_data).to(device))
+                    elif use_compile:
+                        if model_type == 'htdemucs':
+                            x = preprocessor.stft(arr)
+                            x, xt = model(x, arr)
+                            x = preprocessor.istft(x, xt)
+                        else:
+                            x = preprocessor.stft(arr)
+                            x = model(x)
+                            x = preprocessor.istft(x)
                     else:
                         x = model(arr)
 
