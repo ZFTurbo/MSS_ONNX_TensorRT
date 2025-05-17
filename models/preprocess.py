@@ -483,20 +483,22 @@ class Mel_band_roformer_processor:
     
     def istft(self, masks):
         stft_repr = rearrange(self.stft_repr, 'b f t c -> b 1 f t c')
+        
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
         stft_repr = torch.view_as_complex(stft_repr)
         masks = torch.view_as_complex(masks)
 
         masks = masks.type(stft_repr.dtype)
 
-        scatter_indices = repeat(self.freq_indices, 'f -> b n f t', b=self.batch, n=self.num_stems, t=stft_repr.shape[-1])
+        scatter_indices = repeat(self.freq_indices, 'f -> b n f t', b=self.batch, n=self.num_stems, t=stft_repr.shape[-1]).to(device)
 
         stft_repr_expanded_stems = repeat(stft_repr, 'b 1 ... -> b n ...', n=self.num_stems)
         masks_summed = torch.zeros_like(stft_repr_expanded_stems).scatter_add_(2, scatter_indices, masks)
 
         denom = repeat(self.num_bands_per_freq, 'f -> (f r) 1', r=self.channels)
 
-        masks_averaged = masks_summed / denom.clamp(min=1e-8)
+        masks_averaged = masks_summed / denom.clamp(min=1e-8).to(device)
 
         stft_repr = stft_repr * masks_averaged
 
