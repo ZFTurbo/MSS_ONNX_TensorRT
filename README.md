@@ -1,8 +1,8 @@
-# Запуск моделей в ONNX/TensorRT
+# Running Models in ONNX/TensorRT
 
-### Запуск с ONNX
+### Running with ONNX
 
-Для запуска модели в формате ONNX используйте следующие параметры:
+To run a model in ONNX format, use the following parameters:
 
 ```bash
 python inference.py \
@@ -14,17 +14,17 @@ python inference.py \
     --onnx_model_path path/to/model.onnx
 ```
 
-Основные параметры:
-- `--use_onnx`: Включить использование ONNX модели
-- `--onnx_model_path`: Путь к ONNX модели
-- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
-- `--config_path`: Путь к конфигурационному файлу
-- `--input_folder`: Папка с входными аудио файлами
-- `--store_dir`: Папка для сохранения результатов
+Key parameters:
+- `--use_onnx`: Enable the use of an ONNX model
+- `--onnx_model_path`: Path to the ONNX model
+- `--model_type`: Model type (htdemucs, bs_roformer, mel_band_roformer, etc.)
+- `--config_path`: Path to the configuration file
+- `--input_folder`: Folder with input audio files
+- `--store_dir`: Folder to save the results
 
-### Запуск с TensorRT
+### Running with TensorRT
 
-Для запуска модели в формате TensorRT используйте следующие параметры:
+To run a model in TensorRT format, use the following parameters:
 
 ```bash
 python inference.py \
@@ -36,30 +36,30 @@ python inference.py \
     --tensorrt_model_path path/to/model.engine
 ```
 
-Основные параметры:
-- `--use_tensorrt`: Включить использование TensorRT модели
-- `--tensorrt_model_path`: Путь к TensorRT engine файлу
-- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
-- `--config_path`: Путь к конфигурационному файлу
-- `--input_folder`: Папка с входными аудио файлами
-- `--store_dir`: Папка для сохранения результатов
+Key parameters:
+- `--use_tensorrt`: Enable the use of a TensorRT model
+- `--tensorrt_model_path`: Path to the TensorRT engine file
+- `--model_type`: Model type (htdemucs, bs_roformer, mel_band_roformer, etc.)
+- `--config_path`: Path to the configuration file
+- `--input_folder`: Folder with input audio files
+- `--store_dir`: Folder to save the results
 
-# Экспорт в ONNX
+# Exporting to ONNX
 
-Модуль для экспорта моделей разделения источников звука из PyTorch в формат ONNX.
+A module for exporting audio source separation models from PyTorch to ONNX format.
 
-## Описание
+## Description
 
-Модуль `export_to_onnx` предоставляет функциональность для конвертации моделей разделения источников звука из формата PyTorch в ONNX. Поддерживает различные типы моделей, включая:
+The `export_to_onnx` module provides functionality for converting audio source separation models from PyTorch format to ONNX. It supports various model types, including:
 - HTDemucs
 - BS Roformer
 - Mel Band Roformer
 - mdx23c
 - segm
 
-## Использование
+## Usage
 
-### Экспорт в ONNX
+### Exporting to ONNX
 
 ```python
 from export_to_onnx import export_model_to_onnx
@@ -72,7 +72,7 @@ export_model_to_onnx(
 )
 ```
 
-### Как отдельный скрипт
+### As a standalone script
 
 ```bash
 python export_to_onnx.py \
@@ -84,29 +84,29 @@ python export_to_onnx.py \
     --force_cpu
 ```
 
-### Параметры командной строки
+### Command-line parameters
 
-- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
-- `--config_path`: Путь к файлу конфигурации модели
-- `--checkpoint_path`: Путь к чекпоинту модели
-- `--output_path`: Путь для сохранения ONNX модели
-- `--opset_version`: Версия ONNX opset (по умолчанию 17)
-- `--force_cpu`: Принудительное использование CPU даже при наличии CUDA
+- `--model_type`: Model type (htdemucs, bs_roformer, mel_band_roformer, etc.)
+- `--config_path`: Path to the model's configuration file
+- `--checkpoint_path`: Path to the model checkpoint
+- `--output_path`: Path to save the ONNX model
+- `--opset_version`: ONNX opset version (default is 17)
+- `--force_cpu`: Force CPU usage even if CUDA is available
 
-# Экспорт в TensorRT
+# Exporting to TensorRT
 
-## Описание
+## Description
 
-Модуль `export_to_tensorrt` предоставляет функциональность для конвертации моделей разделения источников звука из формата ONNX в TensorRT Engine. Поддерживает различные типы моделей, включая:
+The `export_to_tensorrt` module provides functionality for converting audio source separation models from ONNX format to a TensorRT Engine. It supports various model types, including:
 - HTDemucs
 - BS Roformer
 - Mel Band Roformer
 - mdx23c
 - segm
 
-## Использование
+## Usage
 
-### Экспорт в TensorRT
+### Exporting to TensorRT
 
 ```python
 from export_to_tensorrt import export_to_tensorrt
@@ -120,7 +120,7 @@ export_to_tensorrt(
 )
 ```
 
-### Как отдельный скрипт
+### As a standalone script
 
 ```bash
 python export_to_tensorrt.py \
@@ -131,10 +131,10 @@ python export_to_tensorrt.py \
     --fp16
 ```
 
-### Параметры командной строки
+### Command-line parameters
 
-- `--onnx_path`: Путь к ONNX модели
-- `--model_type`: Тип модели (htdemucs, bs_roformer, mel_band_roformer и т.д.)
-- `--config_path`: Путь к файлу конфигурации модели
-- `--output_path`: Путь для сохранения TensorRT engine
-- `--fp16`/`--fp8`: Использовать FP16 точность (опционально)
+- `--onnx_path`: Path to the ONNX model
+- `--model_type`: Model type (htdemucs, bs_roformer, mel_band_roformer, etc.)
+- `--config_path`: Path to the model's configuration file
+- `--output_path`: Path to save the TensorRT engine
+- `--fp16`/`--fp8`: Use FP16 precision (optional)
